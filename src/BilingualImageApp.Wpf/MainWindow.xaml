@@ -1,0 +1,62 @@
+﻿<Window x:Class="BilingualImageApp.Wpf.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:BilingualImageApp.Wpf"
+        mc:Ignorable="d"
+        Title="Tweetalige Tekst Extractor" Height="600" Width="900">
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- Image selection and OCR -->
+        <StackPanel Orientation="Horizontal" Grid.Row="0" Margin="0,0,0,10">
+            <Button x:Name="btnSelectImage" Content="Afbeelding kiezen..." Margin="0,0,10,0" Click="BtnSelectImage_Click" />
+            <TextBlock x:Name="txtSelectedImage" VerticalAlignment="Center" />
+            <Button x:Name="btnOcr" Content="OCR uitvoeren" Margin="20,0,0,0" Click="BtnOcr_Click" />
+        </StackPanel>
+
+        <!-- Column assignment -->
+        <StackPanel Orientation="Horizontal" Grid.Row="1" Margin="0,0,0,10">
+            <TextBlock Text="Kolom 1 is:" VerticalAlignment="Center" Margin="0,0,5,0"/>
+            <ComboBox x:Name="cmbLanguage1" Width="120" Margin="0,0,20,0">
+                <ComboBoxItem Content="Nederlands" />
+                <ComboBoxItem Content="Engels" />
+                <ComboBoxItem Content="Duits" />
+                <ComboBoxItem Content="Frans" />
+            </ComboBox>
+            <TextBlock Text="Kolom 2 is:" VerticalAlignment="Center" Margin="0,0,5,0"/>
+            <ComboBox x:Name="cmbLanguage2" Width="120">
+                <ComboBoxItem Content="Nederlands" />
+                <ComboBoxItem Content="Engels" />
+                <ComboBoxItem Content="Duits" />
+                <ComboBoxItem Content="Frans" />
+            </ComboBox>
+        </StackPanel>
+
+        <!-- DataGrid for text pairs -->
+        <DataGrid x:Name="dataGridTextPairs" Grid.Row="2" AutoGenerateColumns="False" CanUserAddRows="True" CanUserDeleteRows="True" Margin="0,0,0,10">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Taal 1" Binding="{Binding Language1}" Width="*"/>
+                <DataGridTextColumn Header="Taal 2" Binding="{Binding Language2}" Width="*"/>
+                <DataGridTextColumn Header="Afbeelding" Binding="{Binding SourceImage}" Width="*"/>
+                <DataGridTextColumn Header="FuzzyScore" Binding="{Binding FuzzyScore}" Width="*"/>
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <!-- Save/Load and error handling -->
+        <StackPanel Orientation="Horizontal" Grid.Row="3" HorizontalAlignment="Right">
+            <Button x:Name="btnSave" Content="Opslaan" Margin="0,0,10,0" Click="BtnSave_Click" />
+            <Button x:Name="btnLoad" Content="Laden" Margin="0,0,10,0" Click="BtnLoad_Click" />
+            <TextBlock x:Name="txtStatus" VerticalAlignment="Center" Foreground="Red" />
+        </StackPanel>
+    </Grid>
+</Window>
