@@ -1,0 +1,52 @@
+# .gitignore for Visual Studio, C#, WPF, and .NET
+# Build results
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.VC.db
+*.VC.VC.opendb
+*.pdb
+*.cache
+*.ilk
+*.log
+*.tlog
+*.vspscc
+*.vssscc
+*.ncb
+*.sdf
+*.opensdf
+*.sbr
+*.scc
+*.vssscc
+*.dbmdl
+*.dbproj.schemaview
+*.dbproj.user
+*.dbproj.vspscc
+*.v12.suo
+*.DS_Store
+*.vscode/
+# MSTest/Test Results
+TestResults/
+*.TestResults
+# NuGet
+*.nupkg
+# Others
+_ReSharper*/
+*.resharper
+*.DotSettings.user
+*.dotCover
+*.dotCover.user
+# Tesseract traineddata (if not source)
+!tessdata/*.traineddata
+# Ignore all traineddata except those in source
+# Rider
+.idea/
+# Windows image cache
+Thumbs.db
+# Mac image cache
+.DS_Store
+# Python virtualenv (if any)
+venv/

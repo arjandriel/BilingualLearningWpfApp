@@ -1,7 +1,0 @@
-C:\Data\Git\LearnTool\EasyLearn\tests\BilingualImageApp.Tests\obj\Debug\net10.0\BilingualImageApp.Tests.csproj.AssemblyReference.cache
-C:\Data\Git\LearnTool\EasyLearn\tests\BilingualImageApp.Tests\obj\Debug\net10.0\BilingualImageApp.Tests.GeneratedMSBuildEditorConfig.editorconfig
-C:\Data\Git\LearnTool\EasyLearn\tests\BilingualImageApp.Tests\obj\Debug\net10.0\BilingualImageApp.Tests.gentestingplatformentrypointinputcache.cache
-C:\Data\Git\LearnTool\EasyLearn\tests\BilingualImageApp.Tests\obj\Debug\net10.0\BilingualImageApp.Tests.genautoregisteredextensionsinputcache.cache
-C:\Data\Git\LearnTool\EasyLearn\tests\BilingualImageApp.Tests\obj\Debug\net10.0\BilingualImageApp.Tests.AssemblyInfoInputs.cache
-C:\Data\Git\LearnTool\EasyLearn\tests\BilingualImageApp.Tests\obj\Debug\net10.0\BilingualImageApp.Tests.AssemblyInfo.cs
-C:\Data\Git\LearnTool\EasyLearn\tests\BilingualImageApp.Tests\obj\Debug\net10.0\BilingualImageApp.Tests.csproj.CoreCompileInputs.cache
