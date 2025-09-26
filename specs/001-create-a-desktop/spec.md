@@ -1,3 +1,33 @@
+
+---
+
+## 📝 Requirements & Lessons Learned (2025-09-26)
+
+### Additional Requirements (found during development)
+- **CSV Storage**: Text pairs must be stored in CSV format for easier manual editing. (Replaces JSON storage.)
+- **Build Output Path**: All build outputs must be placed in a `Build` directory at the root of the workspace, using `Directory.Build.props`.
+- **Robust OCR Parsing**: The OCR logic must handle text pairs separated by bullets, tabs, or spaces, and be resilient to inconsistent formatting.
+- **UI Compactness**: Language selection controls (ComboBoxes) must be compact and visually efficient.
+- **Popup Image Preview & Rotation**: Selecting an image opens a popup for preview and rotation before OCR is performed.
+- **No Debug Popups**: The application does not show the raw OCR result in a popup; only user-initiated actions are shown.
+- **Optional Raw OCR Output Logging**: If no text pairs are found, the user must be given the option to save the raw OCR output to a file for troubleshooting and validation.
+- **Dutch UI, English Code**: All code, comments, and identifiers are in English; the user interface is fully in Dutch.
+- **Test-Driven Development**: All features are developed using TDD, with unit and integration tests for models, services, and UI logic.
+- **Minimal Dependencies**: Only essential libraries are used (Tesseract, FuzzySharp, System.Text.Json, System.Drawing.Common, MSTest v4).
+- **Error Handling**: The app must provide clear error messages for missing tessdata, OCR failures, file issues, and invalid/duplicate text pairs.
+- **Performance**: OCR must complete in under 2 seconds per image; UI must remain responsive.
+- **Version Control**: All changes are tracked in Git and pushed to GitHub.
+
+### Lessons Learned
+- Output path redirection for WPF must use `Directory.Build.props` (not project file alone).
+- OCR output may use various separators (bullets, tabs, spaces); parsing must be flexible.
+- UI controls (especially ComboBoxes) require explicit sizing for compactness.
+- Immediate image preview/rotation improves user workflow and data quality.
+- Debug popups (e.g. raw OCR result) should be removed for production; only user-initiated dialogs remain.
+- Logging raw OCR output is essential for debugging extraction issues, but should be user-initiated if no pairs are found.
+- CSV is more user-friendly for manual editing than JSON for this use case.
+
+---
 # Feature Specification: Desktop app voor tweetalige tekstherkenning uit afbeeldingen
 
 **Feature Branch**: `001-create-a-desktop`  

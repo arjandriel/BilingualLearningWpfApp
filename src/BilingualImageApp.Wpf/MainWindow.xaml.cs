@@ -20,6 +20,8 @@ public partial class MainWindow : Window
 {
     private ObservableCollection<TextPair> _textPairs = new();
     private string? _selectedImagePath;
+    private BitmapImage? _currentBitmap;
+    private int _currentRotation = 0;
     private readonly OcrService _ocrService;
     private readonly FuzzyMatchService _fuzzyService;
     private readonly string _tessdataPath = "./tessdata"; // Adjust as needed
@@ -30,6 +32,7 @@ public partial class MainWindow : Window
         dataGridTextPairs.ItemsSource = _textPairs;
         _ocrService = new OcrService(_tessdataPath);
         _fuzzyService = new FuzzyMatchService();
+        btnOcr.IsEnabled = false;
     }
 
     private void BtnSelectImage_Click(object sender, RoutedEventArgs e)
@@ -39,36 +42,119 @@ public partial class MainWindow : Window
         {
             _selectedImagePath = dlg.FileName;
             txtSelectedImage.Text = System.IO.Path.GetFileName(_selectedImagePath);
+            _currentBitmap = new BitmapImage();
+            _currentBitmap.BeginInit();
+            _currentBitmap.UriSource = new Uri(_selectedImagePath);
+            _currentBitmap.CacheOption = BitmapCacheOption.OnLoad;
+            _currentBitmap.Rotation = Rotation.Rotate0;
+            _currentBitmap.EndInit();
+            _currentRotation = 0;
+            // Open the image preview popup immediately
+            var dlgPreview = new ImagePreviewWindow(_currentBitmap, _currentRotation);
+            dlgPreview.Owner = this;
+            dlgPreview.ShowDialog();
+            _currentRotation = dlgPreview.Rotation;
+            btnOcr.IsEnabled = true;
         }
+    }
+
+
+    private void BtnPreview_Click(object sender, RoutedEventArgs e)
+    {
+        if (_currentBitmap == null) return;
+        var dlg = new ImagePreviewWindow(_currentBitmap, _currentRotation);
+        dlg.Owner = this;
+        dlg.ShowDialog();
+        // Update rotation if changed in dialog
+        _currentRotation = dlg.Rotation;
     }
 
     private void BtnOcr_Click(object sender, RoutedEventArgs e)
     {
-        if (string.IsNullOrEmpty(_selectedImagePath) || !File.Exists(_selectedImagePath))
+        if (string.IsNullOrEmpty(_selectedImagePath) || !File.Exists(_selectedImagePath) || _currentBitmap == null)
         {
             txtStatus.Text = "Geen afbeelding geselecteerd.";
             return;
         }
         try
         {
-            var bmpImage = new BitmapImage(new Uri(_selectedImagePath));
-            var pix = BitmapImageToPix(bmpImage);
+            // Apply rotation if needed
+            BitmapSource bmpSource = _currentBitmap;
+            if (_currentRotation != 0)
+            {
+                bmpSource = new TransformedBitmap(_currentBitmap, new System.Windows.Media.RotateTransform(_currentRotation));
+            }
+            // Convert BitmapSource to Pix
+            var encoder = new BmpBitmapEncoder();
+            encoder.Frames.Add(BitmapFrame.Create(bmpSource));
+            using var ms = new MemoryStream();
+            encoder.Save(ms);
+            ms.Position = 0;
+            var pix = Pix.LoadFromMemory(ms.ToArray());
             var ocrText = _ocrService.ExtractText(pix);
+            // (No popup: raw OCR output display removed; was for debugging)
+
             var lines = ocrText.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
             _textPairs.Clear();
+            int maxColumns = 0;
             foreach (var line in lines)
             {
-                var columns = line.Split('\t');
-                if (columns.Length >= 2)
+                string[] columns;
+                if (line.Contains("O"))
                 {
+                    // Split on 'O' with optional spaces around
+                    columns = System.Text.RegularExpressions.Regex.Split(line, @"\s*O\s*");
+                }
+                else
+                {
+                    // Fallback: split by tab or 2+ spaces
+                    columns = System.Text.RegularExpressions.Regex.Split(line, "[\t]|[ ]{2,}");
+                }
+                // Trim and filter empty parts
+                var parts = columns.Select(p => p.Trim()).Where(p => !string.IsNullOrEmpty(p)).ToArray();
+                if (parts.Length >= 2)
+                {
+                    // Skip header lines
+                    if (parts[0].Equals("Frans", StringComparison.OrdinalIgnoreCase) || parts[0].Equals("Frans > Nederlands", StringComparison.OrdinalIgnoreCase))
+                        continue;
+                    // Add as a pair
                     _textPairs.Add(new TextPair
                     {
-                        Language1 = columns[0],
-                        Language2 = columns[1],
+                        Language1 = parts[0],
+                        Language2 = parts[1],
                         SourceImage = System.IO.Path.GetFileName(_selectedImagePath)
                     });
                 }
             }
+            // If no pairs found, offer to save raw OCR output
+            if (_textPairs.Count == 0)
+            {
+                var result = MessageBox.Show(
+                    "Er zijn geen tekstparen gevonden. Wilt u de ruwe OCR-uitvoer opslaan voor analyse?",
+                    "Geen tekstparen gevonden",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Question);
+                if (result == MessageBoxResult.Yes)
+                {
+                    var saveDlg = new Microsoft.Win32.SaveFileDialog
+                    {
+                        Filter = "Tekstbestand (*.txt)|*.txt",
+                        FileName = "ocr_raw_output.txt"
+                    };
+                    if (saveDlg.ShowDialog() == true)
+                    {
+                        try
+                        {
+                            File.WriteAllText(saveDlg.FileName, ocrText);
+                        }
+                        catch (Exception exFile)
+                        {
+                            MessageBox.Show($"Kon OCR-tekst niet naar bestand schrijven: {exFile.Message}", "Fout bij schrijven");
+                        }
+                    }
+                }
+            }
+            MessageBox.Show($"Detected {maxColumns} columns per line (max). Text pairs created: {_textPairs.Count}", "Column Detection");
             txtStatus.Text = $"{_textPairs.Count} tekstparen gevonden.";
         }
         catch (Exception ex)
