@@ -89,20 +89,23 @@ public partial class MainWindow : Window
 
     private void BtnSave_Click(object sender, RoutedEventArgs e)
     {
-        var dlg = new SaveFileDialog { Filter = "JSON-bestand (*.json)|*.json" };
+        var dlg = new SaveFileDialog { Filter = "CSV-bestand (*.csv)|*.csv" };
         if (dlg.ShowDialog() == true)
         {
             try
             {
-                var doc = new Document
+                using var writer = new StreamWriter(dlg.FileName);
+                writer.WriteLine("Language1,Language2,SourceImage,FuzzyScore");
+                foreach (var pair in _textPairs)
                 {
-                    Id = System.IO.Path.GetFileName(dlg.FileName),
-                    TextPairs = _textPairs.ToList(),
-                    Images = new() { new BilingualImageApp.Wpf.Models.Image { Id = _selectedImagePath, DateAdded = DateTime.Now, RecognitionStatus = RecognitionStatus.Recognized } }
-                };
-                var json = JsonSerializer.Serialize(doc, new JsonSerializerOptions { WriteIndented = true });
-                File.WriteAllText(dlg.FileName, json);
-                txtStatus.Text = "Opgeslagen.";
+                    // Escape commas and quotes for CSV
+                    string l1 = EscapeCsv(pair.Language1);
+                    string l2 = EscapeCsv(pair.Language2);
+                    string img = EscapeCsv(pair.SourceImage);
+                    string score = pair.FuzzyScore.ToString(System.Globalization.CultureInfo.InvariantCulture);
+                    writer.WriteLine($"{l1},{l2},{img},{score}");
+                }
+                txtStatus.Text = "Opgeslagen als CSV.";
             }
             catch (Exception ex)
             {
@@ -113,25 +116,86 @@ public partial class MainWindow : Window
 
     private void BtnLoad_Click(object sender, RoutedEventArgs e)
     {
-        var dlg = new OpenFileDialog { Filter = "JSON-bestand (*.json)|*.json" };
+        var dlg = new OpenFileDialog { Filter = "CSV-bestand (*.csv)|*.csv" };
         if (dlg.ShowDialog() == true)
         {
             try
             {
-                var json = File.ReadAllText(dlg.FileName);
-                var doc = JsonSerializer.Deserialize<Document>(json);
                 _textPairs.Clear();
-                if (doc?.TextPairs != null)
+                using var reader = new StreamReader(dlg.FileName);
+                string? header = reader.ReadLine(); // skip header
+                while (!reader.EndOfStream)
                 {
-                    foreach (var pair in doc.TextPairs)
-                        _textPairs.Add(pair);
+                    var line = reader.ReadLine();
+                    if (string.IsNullOrWhiteSpace(line)) continue;
+                    var columns = ParseCsvLine(line);
+                    if (columns.Length >= 4)
+                    {
+                        _textPairs.Add(new TextPair
+                        {
+                            Language1 = columns[0],
+                            Language2 = columns[1],
+                            SourceImage = columns[2],
+                            FuzzyScore = double.TryParse(columns[3], System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var score) ? score : 100.0
+                        });
+                    }
                 }
-                txtStatus.Text = "Bestand geladen.";
+                txtStatus.Text = "CSV-bestand geladen.";
             }
             catch (Exception ex)
             {
                 txtStatus.Text = "Fout bij laden: " + ex.Message;
             }
         }
+    }
+    // Helper to escape CSV fields
+    private static string EscapeCsv(string? field)
+    {
+        if (field == null) return "";
+        if (field.Contains('"')) field = field.Replace("\"", "\"\"");
+        if (field.Contains(',') || field.Contains('"') || field.Contains('\n') || field.Contains('\r'))
+            return $"\"{field}\"";
+        return field;
+    }
+
+    // Helper to parse a CSV line (simple, not RFC4180-complete)
+    private static string[] ParseCsvLine(string line)
+    {
+        var result = new System.Collections.Generic.List<string>();
+        bool inQuotes = false;
+        var value = new System.Text.StringBuilder();
+        for (int i = 0; i < line.Length; i++)
+        {
+            char c = line[i];
+            if (inQuotes)
+            {
+                if (c == '"')
+                {
+                    if (i + 1 < line.Length && line[i + 1] == '"')
+                    {
+                        value.Append('"');
+                        i++;
+                    }
+                    else
+                        inQuotes = false;
+                }
+                else
+                    value.Append(c);
+            }
+            else
+            {
+                if (c == ',')
+                {
+                    result.Add(value.ToString());
+                    value.Clear();
+                }
+                else if (c == '"')
+                    inQuotes = true;
+                else
+                    value.Append(c);
+            }
+        }
+        result.Add(value.ToString());
+        return result.ToArray();
     }
 }
